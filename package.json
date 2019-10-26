@@ -1,0 +1,25 @@
+{
+  "name": "gulp-seed",
+  "version": "0.1.1",
+  "description": "使用 node + gulp 搭建前端自动化本地开发环境的基本配置",
+  "main": "gulpfile.js",
+  "scripts": {
+    "dev": "gulp dev"
+  },
+  "keywords": [
+    "前端自动化, 本地开发, node, gulp"
+  ],
+  "author": "wcq",
+  "license": "MIT",
+  "devDependencies": {
+    "autoprefixer": "^6.6.1",
+    "browser-sync": "^2.18.5",
+    "gulp": "^3.9.1",
+    "gulp-postcss": "^6.2.0",
+    "gulp-print": "^2.0.1",
+    "gulp-sass": "^3.0.0",
+    "gulp-sourcemaps": "^1.9.1",
+    "gulp-notify": "^2.2.0"
+  },
+  "dependencies": {}
+}
