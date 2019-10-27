@@ -2,13 +2,18 @@
  * @author Prashant Sharma / spidersharma03
  * @author Ben Houston / bhouston, https://clara.io
  *
- * To avoid cube map seams, I create an extra pixel around each face. This way when the cube map is
- * sampled by an application later(with a little care by sampling the centre of the texel), the extra 1 border
+ *  To avoid cube map seams<缝隙>, I create an extra pixel around each face. This way when the cube map is
+ * 	为了避免立体贴图的缝隙，我在每个面的周围添加了一个额外像素点。这样应用程序后期对立体贴图进行采样时
+ * 	sampled by an application later(with a little care by sampling<抽样> the centre of the texel<图素>), the extra 1 border
+ * 	（只对图素中心一点进行取样），这样额外的像素边就可以确保产品没有缝隙。
  *	of pixels makes sure that there is no seams artifacts present. This works perfectly for cubeUV format as
+ *  无论这六个面是如何排列的，这种立体贴图的方式都能完美满足。
  *	well where the 6 faces can be arranged in any manner whatsoever.
- * Code in the beginning of fragment shader's main function does this job for a given resolution.
+ * 	Code in the beginning of fragment shader's main function does this job for a given resolution.
+ *  立体贴图的解决主要在于fragment函数。
  *	Run Scene_PMREM_Test.html in the examples directory to see the sampling from the cube lods generated
  *	by this class.
+ *  运行Scene_PMREM_Test.html这个例子，能直接的看到cude是通过这个类如何抽样的
  */
 
 import {
@@ -28,32 +33,46 @@ import {
 	sRGBEncoding
 } from "../../../build/three.module.js";
 
-var PMREMGenerator = ( function () {
+var PMREMGenerator = (function () {
 
 	var shader = getShader();
-	var camera = new OrthographicCamera( - 1, 1, 1, - 1, 0.0, 1000 );
+	// 正交相机
+	var camera = new OrthographicCamera(-1, 1, 1, -1, 0.0, 1000);
+	// 场景
 	var scene = new Scene();
-	var planeMesh = new Mesh( new PlaneBufferGeometry( 2, 2, 0 ), shader );
-	planeMesh.material.side = DoubleSide;
-	scene.add( planeMesh );
-	scene.add( camera );
+	// 网格 - 平面缓冲几何体
+	var planeMesh = new Mesh(new PlaneBufferGeometry(2, 2, 0), shader);
 
-	var PMREMGenerator = function ( sourceTexture, samplesPerLevel, resolution ) {
+	planeMesh.material.side = DoubleSide;
+	
+	scene.add(planeMesh);
+	scene.add(camera);
+
+	/**
+	 * PEREMGenerator类
+	 * @param { Object } sourceTexture 
+	 * @param { Number } samplesPerLevel 
+	 * @param { Number } resolution 
+	 */
+
+	var PMREMGenerator = function (sourceTexture, samplesPerLevel, resolution) {
 
 		this.sourceTexture = sourceTexture;
-		this.resolution = ( resolution !== undefined ) ? resolution : 256; // NODE: 256 is currently hard coded in the glsl code for performance reasons
-		this.samplesPerLevel = ( samplesPerLevel !== undefined ) ? samplesPerLevel : 32;
+		this.resolution = (resolution !== undefined) ? resolution : 256;
+		// 出于性能原因, 256作为当前硬编码在GLSL代码中
+		this.samplesPerLevel = (samplesPerLevel !== undefined) ? samplesPerLevel : 32;
 
-		var monotonicEncoding = ( this.sourceTexture.encoding === LinearEncoding ) ||
-			( this.sourceTexture.encoding === GammaEncoding ) || ( this.sourceTexture.encoding === sRGBEncoding );
+		var monotonicEncoding = (this.sourceTexture.encoding === LinearEncoding) ||
+			(this.sourceTexture.encoding === GammaEncoding) || (this.sourceTexture.encoding === sRGBEncoding);
 
-		this.sourceTexture.minFilter = ( monotonicEncoding ) ? LinearFilter : NearestFilter;
-		this.sourceTexture.magFilter = ( monotonicEncoding ) ? LinearFilter : NearestFilter;
+		this.sourceTexture.minFilter = (monotonicEncoding) ? LinearFilter : NearestFilter;
+		this.sourceTexture.magFilter = (monotonicEncoding) ? LinearFilter : NearestFilter;
 		this.sourceTexture.generateMipmaps = this.sourceTexture.generateMipmaps && monotonicEncoding;
 
 		this.cubeLods = [];
 
 		var size = this.resolution;
+
 		var params = {
 			format: this.sourceTexture.format,
 			magFilter: this.sourceTexture.magFilter,
@@ -65,14 +84,14 @@ var PMREMGenerator = ( function () {
 		};
 
 		// how many LODs fit in the given CubeUV Texture.
-		this.numLods = Math.log( size ) / Math.log( 2 ) - 2; // IE11 doesn't support Math.log2
+		this.numLods = Math.log(size) / Math.log(2) - 2; // IE11 doesn't support Math.log2
 
-		for ( var i = 0; i < this.numLods; i ++ ) {
+		for (var i = 0; i < this.numLods; i++) {
 
-			var renderTarget = new WebGLRenderTargetCube( size, size, params );
+			var renderTarget = new WebGLRenderTargetCube(size, size, params);
 			renderTarget.texture.name = "PMREMGenerator.cube" + i;
-			this.cubeLods.push( renderTarget );
-			size = Math.max( 16, size / 2 );
+			this.cubeLods.push(renderTarget);
+			size = Math.max(16, size / 2);
 
 		}
 
@@ -95,15 +114,15 @@ var PMREMGenerator = ( function () {
 		 * This method requires the most amount of thinking I guess. Here is a paper which we could try to implement in future::
 		 * https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch20.html
 		 */
-		update: function ( renderer ) {
+		update: function (renderer) {
 
 			// Texture should only be flipped for CubeTexture, not for
 			// a Texture created via WebGLRenderTargetCube.
-			var tFlip = ( this.sourceTexture.isCubeTexture ) ? - 1 : 1;
+			var tFlip = (this.sourceTexture.isCubeTexture) ? -1 : 1;
 
-			shader.defines[ 'SAMPLES_PER_LEVEL' ] = this.samplesPerLevel;
-			shader.uniforms[ 'faceIndex' ].value = 0;
-			shader.uniforms[ 'envMap' ].value = this.sourceTexture;
+			shader.defines['SAMPLES_PER_LEVEL'] = this.samplesPerLevel;
+			shader.uniforms['faceIndex'].value = 0;
+			shader.uniforms['envMap'].value = this.sourceTexture;
 			shader.envMap = this.sourceTexture;
 			shader.needsUpdate = true;
 
@@ -118,84 +137,75 @@ var PMREMGenerator = ( function () {
 			renderer.gammaInput = false;
 			renderer.gammaOutput = false;
 
-			for ( var i = 0; i < this.numLods; i ++ ) {
-
-				var r = i / ( this.numLods - 1 );
-				shader.uniforms[ 'roughness' ].value = r * 0.9; // see comment above, pragmatic choice
+			for (var i = 0; i < this.numLods; i++) {
+				var r = i / (this.numLods - 1);
+				shader.uniforms['roughness'].value = r * 0.9; // see comment above, pragmatic choice
 				// Only apply the tFlip for the first LOD
-				shader.uniforms[ 'tFlip' ].value = ( i == 0 ) ? tFlip : 1;
-				var size = this.cubeLods[ i ].width;
-				shader.uniforms[ 'mapSize' ].value = size;
-				this.renderToCubeMapTarget( renderer, this.cubeLods[ i ] );
-
-				if ( i < 5 ) shader.uniforms[ 'envMap' ].value = this.cubeLods[ i ].texture;
-
+				shader.uniforms['tFlip'].value = (i == 0) ? tFlip : 1;
+				var size = this.cubeLods[i].width;
+				shader.uniforms['mapSize'].value = size;
+				this.renderToCubeMapTarget(renderer, this.cubeLods[i]);
+				if (i < 5) shader.uniforms['envMap'].value = this.cubeLods[i].texture;
 			}
-
-			renderer.setRenderTarget( currentRenderTarget );
+			renderer.setRenderTarget(currentRenderTarget);
 			renderer.toneMapping = toneMapping;
 			renderer.toneMappingExposure = toneMappingExposure;
 			renderer.gammaInput = gammaInput;
 			renderer.gammaOutput = gammaOutput;
-
 		},
 
-		renderToCubeMapTarget: function ( renderer, renderTarget ) {
-
-			for ( var i = 0; i < 6; i ++ ) {
-
-				this.renderToCubeMapTargetFace( renderer, renderTarget, i );
-
+		renderToCubeMapTarget: function (renderer, renderTarget) {
+			for (var i = 0; i < 6; i++) {
+				this.renderToCubeMapTargetFace(renderer, renderTarget, i);
 			}
-
 		},
 
-		renderToCubeMapTargetFace: function ( renderer, renderTarget, faceIndex ) {
-
-			shader.uniforms[ 'faceIndex' ].value = faceIndex;
-			renderer.setRenderTarget( renderTarget, faceIndex );
+		renderToCubeMapTargetFace: function (renderer, renderTarget, faceIndex) {
+			shader.uniforms['faceIndex'].value = faceIndex;
+			renderer.setRenderTarget(renderTarget, faceIndex);
 			renderer.clear();
-			renderer.render( scene, camera );
-
+			renderer.render(scene, camera);
 		},
 
 		dispose: function () {
-
-			for ( var i = 0, l = this.cubeLods.length; i < l; i ++ ) {
-
-				this.cubeLods[ i ].dispose();
-
+			for (var i = 0, l = this.cubeLods.length; i < l; i++) {
+				this.cubeLods[i].dispose();
 			}
-
-		},
-
+		}
 	};
 
 	function getShader() {
-
-		var shaderMaterial = new ShaderMaterial( {
-
+		var shaderMaterial = new ShaderMaterial({
+			// 使用#define指令在GLSL代码为顶点着色器和片段着色器定义自定义常量;
+			// 每个键/值产生一行定义语句;
 			defines: {
 				"SAMPLES_PER_LEVEL": 20,
 			},
-
+			// 指定要传递给shader代码的uniforms;
+			// 键为uniform的名称,值(value)是{ value: 1.0 }形式;
 			uniforms: {
-				"faceIndex": { value: 0 },
-				"roughness": { value: 0.5 },
-				"mapSize": { value: 0.5 },
-				"envMap": { value: null },
-				"tFlip": { value: - 1 },
+				"faceIndex": {
+					value: 0
+				},
+				"roughness": {
+					value: 0.5
+				},
+				"mapSize": {
+					value: 0.5
+				},
+				"envMap": {
+					value: null
+				},
+				"tFlip": {
+					value: -1
+				},
 			},
-
-			vertexShader:
-				"varying vec2 vUv;\n\
+			vertexShader: "varying vec2 vUv;\n\
 				void main() {\n\
 					vUv = uv;\n\
 					gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n\
 				}",
-
-			fragmentShader:
-				"#include <common>\n\
+			fragmentShader: "#include <common>\n\
 				varying vec2 vUv;\n\
 				uniform int faceIndex;\n\
 				uniform float roughness;\n\
@@ -292,19 +302,16 @@ var PMREMGenerator = ( function () {
 					//rgbColor = testColorMap( roughness ).rgb;\n\
 					gl_FragColor = linearToOutputTexel( vec4( rgbColor, 1.0 ) );\n\
 				}",
-
+			// 在使用此材质显示对象时要使用何种混合
 			blending: NoBlending
-
-		} );
-
+		});
 		shaderMaterial.type = 'PMREMGenerator';
-
 		return shaderMaterial;
-
 	}
 
 	return PMREMGenerator;
+})();
 
-} )();
-
-export { PMREMGenerator };
+export {
+	PMREMGenerator
+};
