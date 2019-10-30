@@ -9,17 +9,32 @@
 <body>
   <div>hello!</div>
   <script type="text/javascript">
-    var obj = {
-      name: "ZhouXingXing"
+    var worker = new Worker("./worker/three_work.js");
+
+    // 发送
+    worker.postMessage({cmd: 'action', msg: "先锋，听令！"});
+
+    // 接收处理
+    worker.onmessage = function(event) {
+      console.log(event.data);
+      doSomeThing();
     }
 
-    function func() {
-      console.log(this.name);
+    // 报错处理
+    worker.onerror = function(event) {
+      console.log([
+        'Error: Line ', event.lineno, ' in ', event.filename, ' : ', event.message
+      ].join(''));
     }
 
-    var func1 = func.bind(obj);
+    function doSomeThing() {
+      worker.postMessage({cmd: "stopit", msg: "好! 速速发兵!"});
+      worker.terminate();
+    }
 
-    func1()
+    setTimeout(function() {
+      worker.postMessage({cmd: 'action', msg: "先锋，何在！"});
+    }, 1000);
   </script>
 </body>
 </html>
