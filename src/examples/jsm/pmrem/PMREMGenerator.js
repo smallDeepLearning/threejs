@@ -33,7 +33,7 @@ import {
 	sRGBEncoding
 } from "../../../build/three.module.js";
 
-var PMREMGenerator = (function () {
+var PMREMGenerator = (function() {
 
 	var shader = getShader();
 	// 正交相机
@@ -55,7 +55,7 @@ var PMREMGenerator = (function () {
 	 * @param { Number } resolution 
 	 */
 
-	var PMREMGenerator = function (sourceTexture, samplesPerLevel, resolution) {
+	var PMREMGenerator = function(sourceTexture, samplesPerLevel, resolution) {
 
 		this.sourceTexture = sourceTexture;
 		this.resolution = (resolution !== undefined) ? resolution : 256;
@@ -74,31 +74,28 @@ var PMREMGenerator = (function () {
 		var size = this.resolution;
 
 		var params = {
+			type: this.sourceTexture.type,
 			format: this.sourceTexture.format,
 			magFilter: this.sourceTexture.magFilter,
 			minFilter: this.sourceTexture.minFilter,
-			type: this.sourceTexture.type,
 			generateMipmaps: this.sourceTexture.generateMipmaps,
 			anisotropy: this.sourceTexture.anisotropy,
 			encoding: this.sourceTexture.encoding
 		};
 
 		// how many LODs fit in the given CubeUV Texture.
-		this.numLods = Math.log(size) / Math.log(2) - 2; // IE11 doesn't support Math.log2
+		// IE11 doesn't support Math.log2
+		this.numLods = Math.log(size) / Math.log(2) - 2;
 
 		for (var i = 0; i < this.numLods; i++) {
-
 			var renderTarget = new WebGLRenderTargetCube(size, size, params);
 			renderTarget.texture.name = "PMREMGenerator.cube" + i;
 			this.cubeLods.push(renderTarget);
 			size = Math.max(16, size / 2);
-
 		}
-
 	};
 
 	PMREMGenerator.prototype = {
-
 		constructor: PMREMGenerator,
 
 		/*
@@ -114,7 +111,7 @@ var PMREMGenerator = (function () {
 		 * This method requires the most amount of thinking I guess. Here is a paper which we could try to implement in future::
 		 * https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch20.html
 		 */
-		update: function (renderer) {
+		update: function(renderer) {
 
 			// Texture should only be flipped for CubeTexture, not for
 			// a Texture created via WebGLRenderTargetCube.
@@ -147,6 +144,7 @@ var PMREMGenerator = (function () {
 				this.renderToCubeMapTarget(renderer, this.cubeLods[i]);
 				if (i < 5) shader.uniforms['envMap'].value = this.cubeLods[i].texture;
 			}
+
 			renderer.setRenderTarget(currentRenderTarget);
 			renderer.toneMapping = toneMapping;
 			renderer.toneMappingExposure = toneMappingExposure;
@@ -154,20 +152,20 @@ var PMREMGenerator = (function () {
 			renderer.gammaOutput = gammaOutput;
 		},
 
-		renderToCubeMapTarget: function (renderer, renderTarget) {
+		renderToCubeMapTarget: function(renderer, renderTarget) {
 			for (var i = 0; i < 6; i++) {
 				this.renderToCubeMapTargetFace(renderer, renderTarget, i);
 			}
 		},
 
-		renderToCubeMapTargetFace: function (renderer, renderTarget, faceIndex) {
+		renderToCubeMapTargetFace: function(renderer, renderTarget, faceIndex) {
 			shader.uniforms['faceIndex'].value = faceIndex;
 			renderer.setRenderTarget(renderTarget, faceIndex);
 			renderer.clear();
 			renderer.render(scene, camera);
 		},
 
-		dispose: function () {
+		dispose: function() {
 			for (var i = 0, l = this.cubeLods.length; i < l; i++) {
 				this.cubeLods[i].dispose();
 			}

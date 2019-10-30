@@ -37,7 +37,7 @@
 
 			var params = {
 				projection: 'normal',
-				autoRotate: true,
+				autoRotate: false,
 				reflectivity: 1.0,
 				background: false,
 				exposure: 1.0,
@@ -52,14 +52,14 @@
 				document.body.appendChild(container);
 
 				camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 2000);
-				camera.position.set(0, 0, 20 * 3.5);
+				camera.position.set(0, 0, 2);
         // 场景
 				scene = new THREE.Scene();
 				scene.background = new THREE.Color(0xCCCCCC);
-        // 渲染
+				// 渲染
 				renderer = new THREE.WebGLRenderer({antialias: true});
 
-				gemBackMaterial = new THREE.MeshPhysicalMaterial( {
+				gemBackMaterial = new THREE.MeshPhysicalMaterial({
 					map: null,
 					color: 0x0000ff,
 					metalness: 1.0,
@@ -70,7 +70,7 @@
 					envMapIntensity: 5,
 					premultipliedAlpha: true
 					// TODO: Add custom blend mode that modulates background color by this materials color.
-				} );
+				});
 
 				gemFrontMaterial = new THREE.MeshPhysicalMaterial( {
 					map: null,
@@ -90,7 +90,7 @@
 				};
 
 				var loader = new OBJLoader(manager);
-				loader.load('models/obj/emerald.obj', function(object) {
+				loader.load('models/obj/model.obj', function(object) {
 					object.traverse(function(child) {
 
 						if (child instanceof THREE.Mesh) {
@@ -110,9 +110,9 @@
 
 				var genCubeUrls = function(prefix, postfix) {
 					return [
-						prefix + 'px' + postfix, prefix + 'nx' + postfix,
-						prefix + 'py' + postfix, prefix + 'ny' + postfix,
-						prefix + 'pz' + postfix, prefix + 'nz' + postfix
+						prefix + 'px2' + postfix, prefix + 'nx2' + postfix,
+						prefix + 'py2' + postfix, prefix + 'ny2' + postfix,
+						prefix + 'pz2' + postfix, prefix + 'nz2' + postfix
 					];
 				};
 

@@ -32993,23 +32993,26 @@ MeshStandardMaterial.prototype.copy = function (source) {
  * }
  */
 
+// MeshPhysicalMaterial(物理网格材质), 作为MeshStandardMaterial的扩展
+// parameters - (可选)
+// 用于定义材质外观的对象，具有一个或多个属性
+
 function MeshPhysicalMaterial(parameters) {
-
 	MeshStandardMaterial.call(this);
-
+	// WebGLRenderer使用它选择shaders
 	this.defines = {
 		'PHYSICAL': ''
 	};
-
+	// material的名称
 	this.type = 'MeshPhysicalMaterial';
-
+	// 放射度，从0.0到1.0。默认值为0.5，模拟了非金属材质的反射率
 	this.reflectivity = 0.5; // maps to F0 = 0.04
-
+	// clearcoat级别, 从0.0到1.0。默认值为0.0
 	this.clearCoat = 0.0;
+	// clearCoat看起来的粗糙程度，从0.0到1.0。默认值为0.0
 	this.clearCoatRoughness = 0.0;
 
 	this.setValues(parameters);
-
 }
 
 MeshPhysicalMaterial.prototype = Object.create(MeshStandardMaterial.prototype);
@@ -33026,12 +33029,10 @@ MeshPhysicalMaterial.prototype.copy = function (source) {
 	};
 
 	this.reflectivity = source.reflectivity;
-
 	this.clearCoat = source.clearCoat;
 	this.clearCoatRoughness = source.clearCoatRoughness;
 
 	return this;
-
 };
 
 /**
