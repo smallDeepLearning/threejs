@@ -60,16 +60,15 @@
 		<div id="container"></div>
 		<div id="info"><a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> css3d - molecules</div>
 		<div id="topmenu">
-			<button id="b_a">Atoms</button><button id="b_b">Bonds</button><button id="b_ab">Atoms + Bonds</button>
+			<button id="b_a">原子</button>
+			<button id="b_b">纽带</button>
+			<button id="b_ab">原子 + 纽带</button>
 		</div>
 		<div id="menu"></div>
-
 		<script type="module">
-
 			import * as THREE from '../build/three.module.js';
-
-			import { TrackballControls } from './jsm/controls/TrackballControls.js';
 			import { PDBLoader } from './jsm/loaders/PDBLoader.js';
+			import { TrackballControls } from './jsm/controls/TrackballControls.js';
 			import { CSS3DRenderer, CSS3DObject, CSS3DSprite } from './jsm/renderers/CSS3DRenderer.js';
 
 			var camera, scene, renderer;
@@ -83,87 +82,71 @@
 			var tmpVec4 = new THREE.Vector3();
 			var offset = new THREE.Vector3();
 
-			var visualizationType = 2;
+			var visualizationType = 2; // 可视化类型
 
 			var MOLECULES = {
-				"Ethanol": "ethanol.pdb",
-				"Aspirin": "aspirin.pdb",
-				"Caffeine": "caffeine.pdb",
-				"Nicotine": "nicotine.pdb",
-				"LSD": "lsd.pdb",
-				"Cocaine": "cocaine.pdb",
-				"Cholesterol": "cholesterol.pdb",
-				"Lycopene": "lycopene.pdb",
-				"Glucose": "glucose.pdb",
-				"Aluminium oxide": "Al2O3.pdb",
-				"Cubane": "cubane.pdb",
-				"Copper": "cu.pdb",
-				"Fluorite": "caf2.pdb",
-				"Salt": "nacl.pdb",
-				"YBCO superconductor": "ybco.pdb",
-				"Buckyball": "buckyball.pdb",
-				//"Diamond": "diamond.pdb",
-				"Graphite": "graphite.pdb"
+				"Ethanol[乙醇]": "ethanol.pdb", // CH3CH2OH
+				"Aspirin[阿司匹林]": "aspirin.pdb",
+				"Caffeine[咖啡因]": "caffeine.pdb",
+				"Nicotine[古丁]": "nicotine.pdb",
+				"LSD[迷幻药]": "lsd.pdb",
+				"Cocaine[卡因]": "cocaine.pdb",
+				"Cholesterol[胆固醇]": "cholesterol.pdb",
+				"Lycopene[红色素]": "lycopene.pdb",
+				"Glucose[葡萄糖]": "glucose.pdb",
+				"Aluminium oxide[氧化铝]": "Al2O3.pdb",
+				"Cubane[立方烷]": "cubane.pdb",
+				"Copper[铜]": "cu.pdb",
+				"Fluorite[萤石]": "caf2.pdb",
+				"Salt[盐]": "nacl.pdb",
+				"YBCO superconductor[YBCO超导体]": "ybco.pdb",
+				"Buckyball[足球烯]": "buckyball.pdb",
+				"Diamond[钻石]": "diamond.pdb",
+				"Graphite[石墨]": "graphite.pdb"
 			};
 
+			// PDB是Protein Data Bank的缩写，原意为“蛋白质数据库”，是一种描述生物大分子的数据格式
+			// PDBLoader作为.pdb文件的加载器
 			var loader = new PDBLoader();
 			var colorSpriteMap = {};
-			var baseSprite = document.createElement( 'img' );
 
-			var menu = document.getElementById( "menu" );
+			var baseSprite = document.createElement('img');
+			var menu = document.getElementById("menu");
 
 			init();
 			animate();
 
 			function init() {
-
-				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 5000 );
+				// 投影摄像机
+				camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 5000);
 				camera.position.z = 1500;
 
 				scene = new THREE.Scene();
+				root = new THREE.Object3D(); // 根容器
 
-				root = new THREE.Object3D();
-				scene.add( root );
-
-				//
+				scene.add(root);
 
 				renderer = new CSS3DRenderer();
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.getElementById( 'container' ).appendChild( renderer.domElement );
+				renderer.setSize(window.innerWidth, window.innerHeight);
+				document.getElementById('container').appendChild(renderer.domElement);
 
-				//
-
-				controls = new TrackballControls( camera, renderer.domElement );
-				controls.rotateSpeed = 0.5;
-				controls.addEventListener( 'change', render );
-
-				//
-
-				baseSprite.onload = function () {
-
-					loadMolecule( "models/molecules/caffeine.pdb" );
-					createMenu();
-
-				};
+				// THREE.TrackballControls()轨迹球控件，最常用的控件，可以使用鼠标轻松的移动、平移，缩放场景
+				controls = new TrackballControls(camera, renderer.domElement);
+				controls.rotateSpeed = 1;
+				controls.addEventListener('change', render);
 
 				baseSprite.src = 'textures/sprites/ball.png';
-
-				//
-
-				window.addEventListener( 'resize', onWindowResize, false );
-
+				baseSprite.onload = function () {
+					loadMolecule("models/molecules/ethanol.pdb");
+					createMenu();
+				};
+				window.addEventListener('resize', onWindowResize, false);
 			}
 
-			//
-
-			function generateButtonCallback( url ) {
-
+			function generateButtonCallback(url) {
 				return function () {
-
-					loadMolecule( url );
-
+					loadMolecule(url);
 				};
-
 			}
 
 			function createMenu() {
@@ -253,7 +236,6 @@
 			}
 
 			function showAtomsBonds() {
-
 				for ( var i = 0; i < objects.length; i ++ ) {
 
 					var object = objects[ i ];
@@ -271,25 +253,23 @@
 
 			}
 
-			//
-
-			function colorify( ctx, width, height, color ) {
-
+			/**
+			 * 设置原子的颜色
+			 * ctx [CanvasRenderingContext2D] -- 当前Canvas画布上绘图的环境
+			 * width [Number] -- Canvas画布的宽度
+			 * height [Number] -- Canvas画布的高度
+			 * color [Object] -- 颜色
+			 */
+			function colorify(ctx, width, height, color) {
 				var r = color.r, g = color.g, b = color.b;
-
-				var imageData = ctx.getImageData( 0, 0, width, height );
+				var imageData = ctx.getImageData(0, 0, width, height);
 				var data = imageData.data;
-
-				for ( var i = 0, l = data.length; i < l; i += 4 ) {
-
+				for (var i = 0, l = data.length; i < l; i += 4) {
 					data[ i + 0 ] *= r;
 					data[ i + 1 ] *= g;
 					data[ i + 2 ] *= b;
-
 				}
-
-				ctx.putImageData( imageData, 0, 0 );
-
+				ctx.putImageData(imageData, 0, 0);
 			}
 
 			function imageToCanvas( image ) {
@@ -309,74 +289,70 @@
 
 			}
 
-			//
-
-			function loadMolecule( url ) {
-
-				for ( var i = 0; i < objects.length; i ++ ) {
-
-					var object = objects[ i ];
-					object.parent.remove( object );
-
+			/**
+			 * 加载分子
+			 * url [String] -- 静态资源路径
+			 */
+			function loadMolecule(url) {
+				for (var i = 0; i < objects.length; i++) {
+					var object = objects[i];
+					object.parent.remove(object);
 				}
 
 				objects = [];
+				loader.load(url, function(pdb) {
+					var geometryAtoms = pdb.geometryAtoms; // BufferGeometry
+					var geometryBonds = pdb.geometryBonds; // BufferGeometry
+					var json = pdb.json; // Object
+					//让模型居中
+					geometryAtoms.computeBoundingBox(); // 计算当前几何体的的边界矩形
+					// geometryAtoms.boundingBox [Box3] -- 当前BufferGeometry的外边界矩形
+					// geometryAtoms.boundingBox.getCenter({x: 0, y: 0, z: 0}) [Vector3]
+					geometryAtoms.boundingBox.getCenter(offset).negate();
+					geometryAtoms.translate(offset.x, offset.y, offset.z);
+					geometryBonds.translate(offset.x, offset.y, offset.z);
 
-				loader.load( url, function ( pdb ) {
+					var positions = geometryAtoms.getAttribute('position'); // 位置组
+					var colors = geometryAtoms.getAttribute('color'); // 颜色组
 
-					var geometryAtoms = pdb.geometryAtoms;
-					var geometryBonds = pdb.geometryBonds;
-					var json = pdb.json;
+					var position = new THREE.Vector3(); // 位置
+					var color = new THREE.Color(); // 颜色
 
-					geometryAtoms.computeBoundingBox();
-					geometryAtoms.boundingBox.getCenter( offset ).negate();
+					// 遍历当前原子数 -- 读取原子的位置和颜色
+					for (var i = 0; i < positions.count; i++) {
+						position.x = positions.getX(i);
+						position.y = positions.getY(i);
+						position.z = positions.getZ(i);
 
-					geometryAtoms.translate( offset.x, offset.y, offset.z );
-					geometryBonds.translate( offset.x, offset.y, offset.z );
+						color.r = colors.getX(i);
+						color.g = colors.getY(i);
+						color.b = colors.getZ(i);
+						
+						var atom = json.atoms[i]; // JSON记录的原子数据
+						var element = atom[4]; // 元素周期表
 
-					var positions = geometryAtoms.getAttribute( 'position' );
-					var colors = geometryAtoms.getAttribute( 'color' );
+						// 设置原子图片颜色
+						if (!colorSpriteMap[element]) {
+							var canvas = imageToCanvas(baseSprite);
+							var context = canvas.getContext('2d');
 
-					var position = new THREE.Vector3();
-					var color = new THREE.Color();
-
-					for ( var i = 0; i < positions.count; i ++ ) {
-
-						position.x = positions.getX( i );
-						position.y = positions.getY( i );
-						position.z = positions.getZ( i );
-
-						color.r = colors.getX( i );
-						color.g = colors.getY( i );
-						color.b = colors.getZ( i );
-
-						var atom = json.atoms[ i ];
-						var element = atom[ 4 ];
-
-						if ( ! colorSpriteMap[ element ] ) {
-
-							var canvas = imageToCanvas( baseSprite );
-							var context = canvas.getContext( '2d' );
-
-							colorify( context, canvas.width, canvas.height, color );
+							colorify(context, canvas.width, canvas.height, color);
 
 							var dataUrl = canvas.toDataURL();
-
-							colorSpriteMap[ element ] = dataUrl;
-
+							colorSpriteMap[element] = dataUrl;
 						}
 
-						var colorSprite = colorSpriteMap[ element ];
+						var colorSprite = colorSpriteMap[element]; // 原子图片
 
-						var atom = document.createElement( 'img' );
+						var atom = document.createElement('img'); // 定义的原子HTML元素
 						atom.src = colorSprite;
 
-						var object = new CSS3DSprite( atom );
-						object.position.copy( position );
-						object.position.multiplyScalar( 75 );
+						var object = new CSS3DSprite(atom); // 建立原子模型 [Object3D]
+						object.position.copy(position); // 设置原子模型位置
+						object.position.multiplyScalar(75); // 将该向量与所传入的标量75进行相乘
 
-						object.matrixAutoUpdate = false;
-						object.updateMatrix();
+						object.matrixAutoUpdate = false; // 当这个属性设置了true后，它将计算每一帧的位移、旋转（四元变换）和缩放矩阵，并重新计算matrixWorld属性
+						object.updateMatrix(); // 更新局部变换
 
 						root.add( object );
 
