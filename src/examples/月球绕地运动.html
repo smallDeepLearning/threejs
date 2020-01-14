@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<title>月球绕地运动</title>
+		<link type="text/css" rel="stylesheet" href="main.css">
+		<style>
+			.label {
+				color: #FFF;
+				font-family: sans-serif;
+				padding: 2px;
+				background: rgba( 0, 0, 0, .6 );
+			}
+		</style>
+	</head>
+	<body>
+		<div id="info"><a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> css2d - label</div>
+
+		<script type="module">
+			import * as THREE from '../build/three.module.js';
+			import { OrbitControls } from './jsm/controls/OrbitControls.js';
+			import { CSS2DRenderer, CSS2DObject } from './jsm/renderers/CSS2DRenderer.js';
+
+			var camera, scene, renderer, labelRenderer;
+			// 该对象用于跟踪时间（如果performance.now可用，则Clock对象通过该方法来实现，否则回落到使用略欠精准的Date.now来实现）
+			var clock = new THREE.Clock();
+			// 加载texture的一个类，内部使用ImageLoader来加载文件
+			var textureLoader = new THREE.TextureLoader();
+			var earth, moon;
+
+			init();
+			animate();
+
+			function init() {
+				var EARTH_RADIUS = 1.5;
+				var MOON_RADIUS = 0.27;
+				/**
+				 * 这一摄像机使用perspective projection（透视投影）来进行投影，被用来模拟人眼所看到的景象
+				 * @fov [Number] -- 摄像机视锥体垂直视野角度
+				 * @aspect [Number] -- 摄像机视锥体长宽比
+				 * @near [Number] -- 摄像机视锥体近端面
+				 * @far [Number] -- 摄像机视锥体远端面
+				 * return Camera [Object3D]
+				 */
+				camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
+				// new THREE.PerspectiveCamera ==> Camera ==> Object3D [原型链]
+				camera.position.set(10, 5, 20);
+
+				scene = new THREE.Scene();
+				// 添加平行光
+				var dirLight = new THREE.DirectionalLight(0xffffff);
+				// new THREE.DirectionalLight ==> Light ==> Object3D [原型链]
+				dirLight.position.set(0, 0, 1);
+				scene.add(dirLight);
+
+				/**
+				 * 用于简单模拟3个坐标轴的对象 -- 红色代表 X 轴、绿色代表 Y 轴、蓝色代表 Z 轴
+				 * size [Number] -- (可选的) 表示代表轴的线段长度. 默认为 1.
+				 */
+				var axesHelper = new THREE.AxesHelper(5);
+				// new THREE.AxesHelper ==> LineSegments ==> Line ==> Object3D ==> EventDispatcher
+				scene.add(axesHelper);
+				/**
+				 * 球缓冲几何体
+				 * @radius [Number] -- 球体半径
+				 * @widthSegments [Number] -- 水平分段数
+				 * @heightSegments [Number] -- 垂直分段数
+				 */ 
+				var earthGeometry = new THREE.SphereBufferGeometry(EARTH_RADIUS, 16, 16);
+				// new THREE.SphereBufferGeometry ==> BufferGeometry ==> EventDispatcher对象
+				var earthMaterial = new THREE.MeshPhongMaterial({
+					specular: 0x333333, // 材质的高光颜色
+					shininess: 5, // 高亮的程度
+					map: textureLoader.load('textures/planets/earth_atmos_2048.jpg'), // 颜色贴图
+					specularMap: textureLoader.load('textures/planets/earth_specular_2048.jpg'), // 镜面反射贴图值会影响[镜面高光]以及[环境贴图对表面的影响程度]
+					normalMap: textureLoader.load('textures/planets/earth_normal_2048.jpg'), // 用于创建法线贴图的纹理 -- RGB值会影响每个像素片段的曲面法线，并更改颜色照亮的方式
+					normalScale: new THREE.Vector2(0.85, 0.85) // 法线贴图对材质的影响程度
+				});
+				// new THREE.MeshPhongMaterial ==> Material ==> EventDispatcher对象
+				earth = new THREE.Mesh(earthGeometry, earthMaterial);
+				// new THREE.Mesh ==> Object3D ==> EventDispatcher对象
+				scene.add(earth);
+
+				var moonGeometry = new THREE.SphereBufferGeometry(MOON_RADIUS, 16, 16);
+				var moonMaterial = new THREE.MeshPhongMaterial({
+					shininess: 5,
+					map: textureLoader.load('textures/planets/moon_1024.jpg')
+				});
+				moon = new THREE.Mesh(moonGeometry, moonMaterial);
+				scene.add(moon);
+
+				// 添加标签
+				var earthDiv = document.createElement('div');
+				earthDiv.className = 'label';
+				earthDiv.textContent = 'Earth';
+				earthDiv.style.marginTop = '-1em';
+				var earthLabel = new CSS2DObject(earthDiv);
+				// new CSS2DObject ==> Object3D ==> EventDispatcher对象
+				earthLabel.position.set(0, EARTH_RADIUS, 0);
+				earth.add(earthLabel);
+
+				var moonDiv = document.createElement('div');
+				moonDiv.className = 'label';
+				moonDiv.textContent = 'Moon';
+				moonDiv.style.marginTop = '-1em';
+				// 将div容器中的DOM元素分装到CSS2Object中，并添加到scence里
+				var moonLabel = new CSS2DObject(moonDiv);
+				moonLabel.position.set(0, MOON_RADIUS, 0);
+				moon.add(moonLabel);
+
+				// 渲染模型界面
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio(window.devicePixelRatio);
+				renderer.setSize(window.innerWidth, window.innerHeight);
+				document.body.appendChild(renderer.domElement);
+
+				// 渲染标签框界面
+				labelRenderer = new CSS2DRenderer();
+				labelRenderer.setSize(window.innerWidth, window.innerHeight);
+				labelRenderer.domElement.style.position = 'absolute';
+				labelRenderer.domElement.style.top = 0;
+				document.body.appendChild(labelRenderer.domElement);
+
+				/**
+				 * 轨道控制器 -- 可以使得相机围绕目标进行轨道运动
+				 * @camera [Object] -- 将要被控制的相机
+				 * @HTMLDOMElement [domElement] -- DOM元素（鼠标触碰界面）
+				 */ 
+				new OrbitControls(camera, labelRenderer.domElement);
+			}
+
+			function animate() {
+				requestAnimationFrame(animate);
+				var elapsed = clock.getElapsedTime(); // 获取自时钟启动后的秒数
+				moon.position.set(Math.sin(elapsed) * 5, 0, Math.cos(elapsed) * 5);
+				renderer.render(scene, camera);
+				labelRenderer.render(scene, camera);
+			}
+			/**
+			 * Step1: 添加地球、月亮模型
+			 * Step2: 给地球、月亮模型添加标签 
+			 * Step3: 渲染地球、月亮界面
+			 * Step4: 渲染地球、月亮标签界面
+			 * Step5: 添加轨道控制
+			 */ 
+			/**
+			 * 在场景图上标识一些文字的方式:
+			 * 1. 精灵: 文字是在canvas中画的，精灵的材质就是加载的带有文字的canvas
+			 * 2. CSS2DRender: 页面中存在两个Render。一个渲染出Canvas，一个是Div。大小相同，位置重叠，div会在canvas上面显示，
+			 *    但是Render.domElement会在labelRender.domElement下面导致controls无法触发，所以要把这个地方换成labelRender.domElement或者不写
+			 */ 
+		</script>
+	</body>
+</html>
