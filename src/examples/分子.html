@@ -58,7 +58,9 @@
 	</head>
 	<body>
 		<div id="container"></div>
-		<div id="info"><a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> css3d - molecules</div>
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> css3d - molecules
+		</div>
 		<div id="topmenu">
 			<button id="b_a">原子</button>
 			<button id="b_b">纽带</button>
@@ -132,7 +134,8 @@
 
 				// THREE.TrackballControls()轨迹球控件，最常用的控件，可以使用鼠标轻松的移动、平移，缩放场景
 				controls = new TrackballControls(camera, renderer.domElement);
-				controls.rotateSpeed = 1;
+				controls.rotateSpeed = 5; // 旋转速度
+
 				controls.addEventListener('change', render);
 
 				baseSprite.src = 'textures/sprites/ball.png';
@@ -143,6 +146,7 @@
 				window.addEventListener('resize', onWindowResize, false);
 			}
 
+			// 切换分子
 			function generateButtonCallback(url) {
 				return function () {
 					loadMolecule(url);
@@ -150,107 +154,72 @@
 			}
 
 			function createMenu() {
-
-				for ( var m in MOLECULES ) {
-
-					var button = document.createElement( 'button' );
+				for (var m in MOLECULES) {
+					var button = document.createElement('button');
 					button.innerHTML = m;
-					menu.appendChild( button );
+					menu.appendChild(button);
 
-					var url = "models/molecules/" + MOLECULES[ m ];
-
-					button.addEventListener( 'click', generateButtonCallback( url ), false );
-
+					var url = "models/molecules/" + MOLECULES[m];
+					button.addEventListener('click', generateButtonCallback(url), false);
 				}
 
 				var b_a = document.getElementById( "b_a" );
 				var b_b = document.getElementById( "b_b" );
 				var b_ab = document.getElementById( "b_ab" );
 
-				b_a.addEventListener( 'click', function () {
-
+				b_a.addEventListener('click', function () {
 					visualizationType = 0;
 					showAtoms();
-
-				} );
-				b_b.addEventListener( 'click', function () {
-
+				});
+				b_b.addEventListener('click', function () {
 					visualizationType = 1;
 					showBonds();
-
-				} );
-				b_ab.addEventListener( 'click', function () {
-
+				});
+				b_ab.addEventListener('click', function () {
 					visualizationType = 2;
 					showAtomsBonds();
-
-				} );
-
+				});
 			}
 
-			//
-
+			// 展示原子
 			function showAtoms() {
-
-				for ( var i = 0; i < objects.length; i ++ ) {
-
-					var object = objects[ i ];
-
-					if ( object instanceof CSS3DSprite ) {
-
+				for (var i = 0; i < objects.length; i ++) {
+					var object = objects[i];
+					if (object instanceof CSS3DSprite) {
 						object.element.style.display = "";
 						object.visible = true;
-
 					} else {
-
 						object.element.style.display = "none";
 						object.visible = false;
-
 					}
-
 				}
-
 			}
 
+			// 展示纽带
 			function showBonds() {
-
-				for ( var i = 0; i < objects.length; i ++ ) {
-
+				for (var i = 0; i < objects.length; i ++) {
 					var object = objects[ i ];
-
-					if ( object instanceof CSS3DSprite ) {
-
+					if (object instanceof CSS3DSprite) {
 						object.element.style.display = "none";
 						object.visible = false;
-
 					} else {
-
 						object.element.style.display = "";
 						object.element.style.height = object.userData.bondLengthFull;
 						object.visible = true;
-
 					}
-
 				}
-
 			}
 
+			// 展示原子+纽带
 			function showAtomsBonds() {
-				for ( var i = 0; i < objects.length; i ++ ) {
-
+				for (var i = 0; i < objects.length; i ++) {
 					var object = objects[ i ];
-
 					object.element.style.display = "";
 					object.visible = true;
-
-					if ( ! ( object instanceof CSS3DSprite ) ) {
-
+					if (!(object instanceof CSS3DSprite)) {
 						object.element.style.height = object.userData.bondLengthShort;
-
 					}
-
 				}
-
 			}
 
 			/**
@@ -272,21 +241,17 @@
 				ctx.putImageData(imageData, 0, 0);
 			}
 
-			function imageToCanvas( image ) {
-
+			function imageToCanvas(image) {
 				var width = image.width;
 				var height = image.height;
-
-				var canvas = document.createElement( 'canvas' );
+				var canvas = document.createElement('canvas');
 
 				canvas.width = width;
 				canvas.height = height;
 
-				var context = canvas.getContext( '2d' );
-				context.drawImage( image, 0, 0, width, height );
-
+				var context = canvas.getContext('2d');
+				context.drawImage(image, 0, 0, width, height);
 				return canvas;
-
 			}
 
 			/**
@@ -354,100 +319,94 @@
 						object.matrixAutoUpdate = false; // 当这个属性设置了true后，它将计算每一帧的位移、旋转（四元变换）和缩放矩阵，并重新计算matrixWorld属性
 						object.updateMatrix(); // 更新局部变换
 
-						root.add( object );
-
-						objects.push( object );
-
+						root.add(object);
+						objects.push(object);
 					}
 
-					positions = geometryBonds.getAttribute( 'position' );
+					positions = geometryBonds.getAttribute('position');
 
 					var start = new THREE.Vector3();
 					var end = new THREE.Vector3();
 
-					for ( var i = 0; i < positions.count; i += 2 ) {
+					for (var i = 0; i < positions.count; i += 2) {
+						start.x = positions.getX(i);
+						start.y = positions.getY(i);
+						start.z = positions.getZ(i);
 
-						start.x = positions.getX( i );
-						start.y = positions.getY( i );
-						start.z = positions.getZ( i );
+						end.x = positions.getX(i+1);
+						end.y = positions.getY(i+1);
+						end.z = positions.getZ(i+1);
 
-						end.x = positions.getX( i + 1 );
-						end.y = positions.getY( i + 1 );
-						end.z = positions.getZ( i + 1 );
+						start.multiplyScalar(75); // Vector3.multiplyScalar() -- 将该向量与所传入的标量s进行相乘
+						end.multiplyScalar(75);
 
-						start.multiplyScalar( 75 );
-						end.multiplyScalar( 75 );
+						tmpVec1.subVectors(end, start); // Vector3.subVectors() -- 将该向量设置为a - b
+						var bondLength = tmpVec1.length() - 50; // Vector3.length() -- 计算从(0, 0, 0)到(x, y, z)的欧几里得长度
 
-						tmpVec1.subVectors( end, start );
-						var bondLength = tmpVec1.length() - 50;
-
-						//
-
-						var bond = document.createElement( 'div' );
+						var bond = document.createElement('div');
 						bond.className = "bond";
 						bond.style.height = bondLength + "px";
 
-						var object = new CSS3DObject( bond );
-						object.position.copy( start );
-						object.position.lerp( end, 0.5 );
+						var object = new CSS3DObject(bond);
+						// object.position -- Vector3
+						object.position.copy(start); // Vector3 -- 将所传入Vector3的x, y, z属性复制给这个三维向量
+						// 在该向量与传入的向量v之间的线性插值
+						// alpha=0.5是沿着线的长度的百分比 —— alpha= 0时表示的是当前向量，alpha=1时表示的是所传入的向量v
+						object.position.lerp(end, 0.5);
 
+						// object.userData  -- {}
 						object.userData.bondLengthShort = bondLength + "px";
-						object.userData.bondLengthFull = ( bondLength + 55 ) + "px";
+						object.userData.bondLengthFull = (bondLength + 55) + "px";
 
-						//
+						// step1: 设置该向量的x、y 和 z 分量
+						// step2: 将该向量设置为它本身与传入的tmpVec1的叉积
+						var axis = tmpVec2.set(0, 1, 0).cross(tmpVec1); // Vector3
+						var radians = Math.acos(tmpVec3.set(0, 1, 0).dot(tmpVec4.copy(tmpVec1).normalize())); // Number
+						// step1：将axis向量转换为单位向量
+						// step2: makeRotationAxis设置当前矩阵为围绕轴axis旋转量为theta弧度
+						var objMatrix = new THREE.Matrix4().makeRotationAxis(axis.normalize(), radians); // Matrix4
 
-						var axis = tmpVec2.set( 0, 1, 0 ).cross( tmpVec1 );
-						var radians = Math.acos( tmpVec3.set( 0, 1, 0 ).dot( tmpVec4.copy( tmpVec1 ).normalize() ) );
-
-						var objMatrix = new THREE.Matrix4().makeRotationAxis( axis.normalize(), radians );
 						object.matrix = objMatrix;
-						object.rotation.setFromRotationMatrix( object.matrix, object.rotation.order );
-
+						// object.rotation -- Euler
+						// 使用基于[object.rotation.order]顺序的纯旋转矩阵[object.matrix]来设置当前欧拉角
+						object.rotation.setFromRotationMatrix(object.matrix, object.rotation.order);
 						object.matrixAutoUpdate = false;
 						object.updateMatrix();
 
-						root.add( object );
+						root.add(object);
+						objects.push(object);
 
-						objects.push( object );
-
-						//
-
-						var bond = document.createElement( 'div' );
+						var bond = document.createElement('div');
 						bond.className = "bond";
 						bond.style.height = bondLength + "px";
 
-						var joint = new THREE.Object3D( bond );
-						joint.position.copy( start );
-						joint.position.lerp( end, 0.5 );
+						var joint = new THREE.Object3D(bond);
+						joint.position.copy(start);
+						joint.position.lerp(end, 0.5);
 
-						joint.matrix.copy( objMatrix );
-						joint.rotation.setFromRotationMatrix( joint.matrix, joint.rotation.order );
+						joint.matrix.copy(objMatrix);
+						joint.rotation.setFromRotationMatrix(joint.matrix, joint.rotation.order);
 
 						joint.matrixAutoUpdate = false;
 						joint.updateMatrix();
 
-						var object = new CSS3DObject( bond );
+						var object = new CSS3DObject(bond);
 						object.rotation.y = Math.PI / 2;
 
 						object.matrixAutoUpdate = false;
 						object.updateMatrix();
 
 						object.userData.bondLengthShort = bondLength + "px";
-						object.userData.bondLengthFull = ( bondLength + 55 ) + "px";
+						object.userData.bondLengthFull = (bondLength + 55) + "px";
 
 						object.userData.joint = joint;
 
-						joint.add( object );
-						root.add( joint );
+						joint.add(object);
+						root.add(joint);
 
-						objects.push( object );
-
+						objects.push(object);
 					}
-
-					//console.log( "CSS3DObjects:", objects.length );
-
-					switch ( visualizationType ) {
-
+					switch (visualizationType) {
 						case 0:
 							showAtoms();
 							break;
@@ -457,49 +416,33 @@
 						case 2:
 							showAtomsBonds();
 							break;
-
 					}
-
 					render();
-
-				} );
-
-
+				});
 			}
 
-			//
-
+			// 窗体变化调整
 			function onWindowResize() {
-
 				camera.aspect = window.innerWidth / window.innerHeight;
 				camera.updateProjectionMatrix();
-
-				renderer.setSize( window.innerWidth, window.innerHeight );
-
+				renderer.setSize(window.innerWidth, window.innerHeight);
 				render();
-
 			}
 
 			function animate() {
-
-				requestAnimationFrame( animate );
+				requestAnimationFrame(animate);
 				controls.update();
 
 				var time = Date.now() * 0.0004;
-
 				root.rotation.x = time;
 				root.rotation.y = time * 0.7;
 
 				render();
-
 			}
 
 			function render() {
-
-				renderer.render( scene, camera );
-
+				renderer.render(scene, camera);
 			}
-
     </script>
   </body>
 
