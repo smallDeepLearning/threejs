@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>精灵</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="main.css">
+		<style>
+			body {
+				background-color: #fff;
+				color: #000;
+			}
+			a {
+				color: #48f;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> css3d - sprites
+		</div>
+		<div id="container"></div>
+
+		<script type="module">
+
+			import * as THREE from '../build/three.module.js';
+
+			import { TWEEN } from './jsm/libs/tween.module.min.js';
+			import { TrackballControls } from './jsm/controls/TrackballControls.js';
+			import { CSS3DRenderer, CSS3DSprite } from './jsm/renderers/CSS3DRenderer.js';
+
+			var camera, scene, renderer;
+			var controls;
+
+			var particlesTotal = 512;
+			var positions = [];
+			var objects = [];
+			var current = 0;
+
+			init();
+			animate();
+
+			function init() {
+				// 透视投影
+				camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 5000);
+				camera.position.set(600, 400, 1500);
+				camera.lookAt(0, 0, 0);
+
+				scene = new THREE.Scene();
+
+				var image = document.createElement('img');
+				image.src = 'textures/sprite.png';
+				image.addEventListener('load', function() {
+					for (var i = 0; i < particlesTotal; i++) {
+						var object = new CSS3DSprite(image.cloneNode());
+						object.position.x = Math.random() * 4000 - 2000,
+						object.position.y = Math.random() * 4000 - 2000,
+						object.position.z = Math.random() * 4000 - 2000;
+						scene.add(object);
+						objects.push(object);
+					}
+					transition();
+				}, false);
+
+
+				var amountX = 16; // 数量X
+				var amountZ = 32; // 数量Z
+				var separation = 150; // 分离
+				var offsetX = ((amountX - 1) * separation) / 2;
+				var offsetZ = ((amountZ - 1) * separation) / 2;
+
+				// 平面位置算法 -- 512 * 3 = 1536
+				for (var i = 0; i < particlesTotal; i++) {
+					var x = (i % amountX) * separation;
+					var z = Math.floor(i / amountX) * separation;
+					var y = (Math.sin(x * 0.5) + Math.sin(z * 0.5)) * 200;
+
+					positions.push(x - offsetX, y, z - offsetZ);
+				}
+
+				var amount = 8;
+				var separation = 150;
+				var offset = ((amount - 1) * separation) / 2;
+				// 立体位置算法 -- 512 * 3 = 1536
+				for (var i = 0; i < particlesTotal; i ++) {
+					var x = (i % amount) * separation;
+					var y = Math.floor((i / amount ) % amount) * separation;
+					var z = Math.floor(i / ( amount * amount)) * separation;
+					positions.push(x - offset, y - offset, z - offset);
+				}
+
+				// 随机位置算法 -- 512 * 3 = 1536
+				for (var i = 0; i < particlesTotal; i++) {
+					positions.push(
+						Math.random() * 4000 - 2000,
+						Math.random() * 4000 - 2000,
+						Math.random() * 4000 - 2000
+					);
+				}
+
+				var radius = 750;
+				// 球体位置算法 -- 512 * 3 = 1536
+				for (var i = 0; i < particlesTotal; i++) {
+					var phi = Math.acos(-1 + (2 * i) / particlesTotal);
+					var theta = Math.sqrt(particlesTotal * Math.PI) * phi;
+					positions.push(
+						radius * Math.cos(theta) * Math.sin(phi),
+						radius * Math.sin(theta) * Math.sin(phi),
+						radius * Math.cos(phi)
+					);
+				}
+
+				// CSS3DRender可以直接通过THREE.CSS3Object(DOMElement)将Dom元素转换为3d元素
+				// 然后控制对象的position和rotation属性中的x, y, z来实现动画效果
+				renderer = new CSS3DRenderer();
+				renderer.setSize(window.innerWidth, window.innerHeight);
+				document.getElementById('container').appendChild(renderer.domElement);
+
+				controls = new TrackballControls(camera, renderer.domElement);
+
+				window.addEventListener('resize', onWindowResize, false);
+			}
+
+			// 窗体大小调整
+			function onWindowResize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize(window.innerWidth, window.innerHeight);
+			}
+
+			function transition() {
+				// current -- 控制模型动画变换间隔
+				var offset = current * particlesTotal * 3;
+				var duration = 2000;
+				// 核心: 将粒子的位置切换到下一个动画过程的粒子位置
+				for (var i = 0, j = offset; i < particlesTotal; i ++, j += 3) {
+					var object = objects[i];
+					new TWEEN.Tween(object.position)
+						.to( {
+							x: positions[j],
+							y: positions[j + 1],
+							z: positions[j + 2]
+						}, Math.random() * duration + duration)
+						.easing(TWEEN.Easing.Exponential.InOut)
+						.start();
+				}
+
+				new TWEEN.Tween(this)
+					.to({}, duration * 3)
+					.onComplete(transition)
+					.start();
+
+				current = (current + 1) % 4;
+			}
+
+			function animate() {
+				requestAnimationFrame( animate );
+				TWEEN.update();
+				controls.update();
+				var time = performance.now(); // Performance是前端性能监控的API
+				for (var i = 0, l = objects.length; i < l; i ++) {
+					var object = objects[i];
+					var scale = Math.sin(( Math.floor(object.position.x) + time) * 0.002) * 0.3 + 1; // 粒子大小变化
+					object.scale.set(scale, scale, scale);
+				}
+				renderer.render(scene, camera);
+			}
+		</script>
+	</body>
+</html>
