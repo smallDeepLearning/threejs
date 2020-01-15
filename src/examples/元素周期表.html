@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>three.js css3d - periodic table</title>
+		<title>元素周期表</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<link type="text/css" rel="stylesheet" href="main.css">
@@ -33,33 +33,33 @@
 				border: 1px solid rgba(127,255,255,0.75);
 			}
 
-				.element .number {
-					position: absolute;
-					top: 20px;
-					right: 20px;
-					font-size: 12px;
-					color: rgba(127,255,255,0.75);
-				}
+			.element .number {
+				position: absolute;
+				top: 20px;
+				right: 20px;
+				font-size: 12px;
+				color: rgba(127,255,255,0.75);
+			}
 
-				.element .symbol {
-					position: absolute;
-					top: 40px;
-					left: 0px;
-					right: 0px;
-					font-size: 60px;
-					font-weight: bold;
-					color: rgba(255,255,255,0.75);
-					text-shadow: 0 0 10px rgba(0,255,255,0.95);
-				}
+			.element .symbol {
+				position: absolute;
+				top: 40px;
+				left: 0px;
+				right: 0px;
+				font-size: 60px;
+				font-weight: bold;
+				color: rgba(255,255,255,0.75);
+				text-shadow: 0 0 10px rgba(0,255,255,0.95);
+			}
 
-				.element .details {
-					position: absolute;
-					bottom: 15px;
-					left: 0px;
-					right: 0px;
-					font-size: 12px;
-					color: rgba(127,255,255,0.75);
-				}
+			.element .details {
+				position: absolute;
+				bottom: 15px;
+				left: 0px;
+				right: 0px;
+				font-size: 12px;
+				color: rgba(127,255,255,0.75);
+			}
 
 			button {
 				color: rgba(127,255,255,0.75);
@@ -82,19 +82,19 @@
 	</head>
 	<body>
 
-		<div id="info"><a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> css3d - periodic table. <a href="https://plus.google.com/113862800338869870683/posts/QcFk5HrWran" target="_blank" rel="noopener">info</a>.</div>
+		<div id="info">
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> css3d - periodic table. <a href="https://plus.google.com/113862800338869870683/posts/QcFk5HrWran" target="_blank" rel="noopener">info</a>.
+		</div>
 		<div id="container"></div>
 		<div id="menu">
-			<button id="table">TABLE</button>
-			<button id="sphere">SPHERE</button>
-			<button id="helix">HELIX</button>
-			<button id="grid">GRID</button>
+			<button id="table">表格式</button>
+			<button id="sphere">球体式</button>
+			<button id="helix">螺旋式</button>
+			<button id="grid">网格式</button>
 		</div>
 
 		<script type="module">
-
 			import * as THREE from '../build/three.module.js';
-
 			import { TWEEN } from './jsm/libs/tween.module.min.js';
 			import { TrackballControls } from './jsm/controls/TrackballControls.js';
 			import { CSS3DRenderer, CSS3DObject } from './jsm/renderers/CSS3DRenderer.js';
@@ -224,23 +224,21 @@
 			var controls;
 
 			var objects = [];
-			var targets = { table: [], sphere: [], helix: [], grid: [] };
+			var targets = {table: [], sphere: [], helix: [], grid: []};
 
 			init();
 			animate();
 
 			function init() {
 
-				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 10000 );
+				camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 10000);
 				camera.position.z = 3000;
 
 				scene = new THREE.Scene();
 
 				// table
-
-				for ( var i = 0; i < table.length; i += 5 ) {
-
-					var element = document.createElement( 'div' );
+				for (var i = 0; i < table.length; i += 5) {
+					var element = document.createElement('div');
 					element.className = 'element';
 					element.style.backgroundColor = 'rgba(0,127,127,' + ( Math.random() * 0.5 + 0.25 ) + ')';
 
@@ -343,7 +341,8 @@
 
 				//
 
-				controls = new TrackballControls( camera, renderer.domElement );
+				controls = new TrackballControls(camera, renderer.domElement);
+				controls.rotateSpeed = 5;
 				controls.minDistance = 500;
 				controls.maxDistance = 6000;
 				controls.addEventListener( 'change', render );
