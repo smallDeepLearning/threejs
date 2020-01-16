@@ -34,6 +34,12 @@
 			import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
 			import { DRACOLoader } from './jsm/loaders/DRACOLoader.js';
 
+			// DRACOLoader是一个通过Draco库处理几何压缩的加载程序
+			// Draco是一个用于压缩、解压3D网格和点骨架的开源库。压缩的几何图形可以明显地更小，代价式客户端设备上增加了解码时间
+			// 独立地Draco文件有一个.drc扩展名，包含顶点位置、法线、颜色和其他属性。
+			// Draco文件不包含材质、纹理、动画或节点层次结构 -- 要使用这些特性，请将Draco几何图形嵌入GLTF文件中。
+			// 一个普通的GLTF文件可以使用GLTF管道转换为Draco压缩的GLTF文件
+			// 当与GLTF一起使用Draco时，GLTFLoader将再内部使用一个DRCOLoader实例
 			var scene, camera, pointLight, stats;
 			var renderer, mixer, controls;
 
@@ -76,19 +82,22 @@
 				path + 'posy' + format, path + 'negy' + format,
 				path + 'posz' + format, path + 'negz' + format
 			]);
-
+			// 指定包含WASM/JS解码库的文件夹路径
 			DRACOLoader.setDecoderPath('js/libs/draco/gltf/');
-
+			// 实例化GLTF加载器loader
 			var loader = new GLTFLoader();
-
+			// THREE.DRACOLoader的实例，用于解码使用KHR_draco_mesh_compression扩展压缩过的文件
 			loader.setDRACOLoader(new DRACOLoader());
 
 			loader.load('models/gltf/LittlestTokyo.glb', function(gltf) {
-				var model = gltf.scene;
+				// gltf作为Object的实例
+				var model = gltf.scene; // model作为THREE.Object3D的实例
 				model.position.set(1, 1, 0);
 				model.scale.set(0.01, 0.01, 0.01);
 				model.traverse(function(child) {
-					if (child.isMesh) child.material.envMap = envMap;
+					if (child.isMesh){
+						child.material.envMap = envMap;
+					}
 				});
 				scene.add(model);
 				// 动画混合器是用于场景中特定对象的动画的播放器。当场景中的多个对象独立动画时，每个对象都可以使用同一个动画混合器。
