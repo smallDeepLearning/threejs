@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js webgl - arraycamera</title>
+		<title>数组相机</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<link type="text/css" rel="stylesheet" href="main.css">
@@ -9,7 +9,6 @@
 	<body>
 
 		<script type="module">
-
 			import * as THREE from '../build/three.module.js';
 
 			var camera, scene, renderer;
@@ -20,33 +19,39 @@
 			animate();
 
 			function init() {
-
 				var ASPECT_RATIO = window.innerWidth / window.innerHeight;
-
-				var WIDTH = ( window.innerWidth / AMOUNT ) * window.devicePixelRatio;
-				var HEIGHT = ( window.innerHeight / AMOUNT ) * window.devicePixelRatio;
+				// window.devicePixelRatio -- 当前显示设备的物理像素分辨率与 CSS像素分辨率的比率
+				// 单一一面的宽度像素值
+				// 单一一面的高度像素值
+				var WIDTH = (window.innerWidth / AMOUNT) * window.devicePixelRatio;
+				var HEIGHT = (window.innerHeight / AMOUNT) * window.devicePixelRatio;
 
 				var cameras = [];
 
-				for ( var y = 0; y < AMOUNT; y ++ ) {
-
-					for ( var x = 0; x < AMOUNT; x ++ ) {
-
-						var subcamera = new THREE.PerspectiveCamera( 40, ASPECT_RATIO, 0.1, 10 );
-						subcamera.viewport = new THREE.Vector4( Math.floor( x * WIDTH ), Math.floor( y * HEIGHT ), Math.ceil( WIDTH ), Math.ceil( HEIGHT ) );
-						subcamera.position.x = ( x / AMOUNT ) - 0.5;
-						subcamera.position.y = 0.5 - ( y / AMOUNT );
+				for (var y = 0; y < AMOUNT; y++) {
+					for (var x = 0; x < AMOUNT; x++) {
+						// 透视投影
+						var subcamera = new THREE.PerspectiveCamera(40, ASPECT_RATIO, 0.1, 10);
+						// 相机的视图端口
+						// Math.floor返回小于等于x的最大整数
+						// Math.ceil返回大于等于x的最小整数
+						subcamera.viewport = new THREE.Vector4(
+							Math.floor(x * WIDTH),
+							Math.floor(y * HEIGHT),
+							Math.ceil(WIDTH),
+							Math.ceil(HEIGHT)
+						);
+						subcamera.position.x = (x / AMOUNT) - 0.5;
+						subcamera.position.y = 0.5 - (y / AMOUNT);
 						subcamera.position.z = 1.5;
-						subcamera.position.multiplyScalar( 2 );
-						subcamera.lookAt( 0, 0, 0 );
+						subcamera.position.multiplyScalar(2); // 将该向量与所传入的标量2进行相乘
+						subcamera.lookAt(0, 0, 0);
 						subcamera.updateMatrixWorld();
-						cameras.push( subcamera );
-
+						cameras.push(subcamera);
 					}
-
 				}
-
-				camera = new THREE.ArrayCamera( cameras );
+				// 摄像机阵列
+				camera = new THREE.ArrayCamera(cameras);
 				camera.position.z = 3;
 
 				scene = new THREE.Scene();
