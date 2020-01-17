@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js webgl - geometry - NURBS</title>
+		<title>几何-NURBS</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<link type="text/css" rel="stylesheet" href="main.css">
@@ -17,20 +17,16 @@
 	</head>
 	<body>
 		<div id="info">
-			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - NURBS curve and surface example
+			<a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> - NURBS曲线和曲面
 		</div>
 
 		<script type="module">
-
 			import * as THREE from '../build/three.module.js';
-
 			import Stats from './jsm/libs/stats.module.js';
-
 			import { NURBSCurve } from './jsm/curves/NURBSCurve.js';
 			import { NURBSSurface } from './jsm/curves/NURBSSurface.js';
 
 			var container, stats;
-
 			var camera, scene, renderer;
 			var group;
 
@@ -46,118 +42,110 @@
 			animate();
 
 			function init() {
+				container = document.createElement('div');
+				document.body.appendChild(container);
 
-				container = document.createElement( 'div' );
-				document.body.appendChild( container );
-
-				camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 2000 );
-				camera.position.set( 0, 150, 750 );
+				camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 2000);
+				camera.position.set(0, 150, 750);
 
 				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0xf0f0f0 );
+				scene.background = new THREE.Color(0xf0f0f0);
 
-				scene.add( new THREE.AmbientLight( 0x808080 ) );
+				scene.add(new THREE.AmbientLight(0x808080)); // 环境光
 
-				var light = new THREE.DirectionalLight( 0xffffff, 1 );
-				light.position.set( 1, 1, 1 );
-				scene.add( light );
+				var light = new THREE.DirectionalLight(0xffffff, 1); // 平行光
+				light.position.set(1, 1, 1);
+				scene.add(light);
 
 				group = new THREE.Group();
 				group.position.y = 50;
-				scene.add( group );
+				scene.add(group);
 
-				// NURBS curve
-
-				var nurbsControlPoints = [];
-				var nurbsKnots = [];
-				var nurbsDegree = 3;
-
-				for ( var i = 0; i <= nurbsDegree; i ++ ) {
-
-					nurbsKnots.push( 0 );
-
+				// NURBS 曲线
+				var nurbsControlPoints = []; // 曲线控制点
+				var nurbsKnots = []; // 曲线打结点
+				var nurbsDegree = 3; // 曲线度数
+				for (var i = 0; i <= nurbsDegree; i++) {
+					nurbsKnots.push(0);
 				}
 
-				for ( var i = 0, j = 20; i < j; i ++ ) {
-
+				// 结点算法
+				for (var i = 0, j = 20; i < j; i++) {
+					// 随机顶点
 					nurbsControlPoints.push(
 						new THREE.Vector4(
 							Math.random() * 400 - 200,
 							Math.random() * 400,
 							Math.random() * 400 - 200,
-							1 // weight of control point: higher means stronger attraction
+							1 // 控制点的重量: 越高，吸引力就越强
 						)
 					);
 
-					var knot = ( i + 1 ) / ( j - nurbsDegree );
-					nurbsKnots.push( THREE.Math.clamp( knot, 0, 1 ) );
-
+					var knot = (i + 1) / (j - nurbsDegree);
+					nurbsKnots.push(THREE.Math.clamp(knot, 0, 1)); // 固定值 -- 限制数值value处于最小值min和最大值max之间
 				}
-
-				var nurbsCurve = new NURBSCurve( nurbsDegree, nurbsKnots, nurbsControlPoints );
+				var nurbsCurve = new NURBSCurve(nurbsDegree, nurbsKnots, nurbsControlPoints); // Curve
 
 				var nurbsGeometry = new THREE.BufferGeometry();
-				nurbsGeometry.setFromPoints( nurbsCurve.getPoints( 200 ) );
+				nurbsGeometry.setFromPoints(nurbsCurve.getPoints(200));
 
-				var nurbsMaterial = new THREE.LineBasicMaterial( { color: 0x333333 } );
+				var nurbsMaterial = new THREE.LineBasicMaterial({color: 0x333333});
 
-				var nurbsLine = new THREE.Line( nurbsGeometry, nurbsMaterial );
-				nurbsLine.position.set( 200, - 100, 0 );
-				group.add( nurbsLine );
+				var nurbsLine = new THREE.Line(nurbsGeometry, nurbsMaterial);
+				nurbsLine.position.set(200, - 100, 0);
+				group.add(nurbsLine);
 
 				var nurbsControlPointsGeometry = new THREE.BufferGeometry();
-				nurbsControlPointsGeometry.setFromPoints( nurbsCurve.controlPoints );
+				nurbsControlPointsGeometry.setFromPoints(nurbsCurve.controlPoints);
 
-				var nurbsControlPointsMaterial = new THREE.LineBasicMaterial( { color: 0x333333, opacity: 0.25, transparent: true } );
+				var nurbsControlPointsMaterial = new THREE.LineBasicMaterial({color: 0x333333, opacity: 0.25, transparent: true});
 
 				var nurbsControlPointsLine = new THREE.Line( nurbsControlPointsGeometry, nurbsControlPointsMaterial );
 				nurbsControlPointsLine.position.copy( nurbsLine.position );
 				group.add( nurbsControlPointsLine );
 
 				// NURBS surface
-
 				var nsControlPoints = [
 					[
-						new THREE.Vector4( - 200, - 200, 100, 1 ),
-						new THREE.Vector4( - 200, - 100, - 200, 1 ),
-						new THREE.Vector4( - 200, 100, 250, 1 ),
-						new THREE.Vector4( - 200, 200, - 100, 1 )
+						new THREE.Vector4(-200, -200, 100, 1),
+						new THREE.Vector4(-200, -100, -200, 1),
+						new THREE.Vector4(-200, 100, 250, 1),
+						new THREE.Vector4(-200, 200, - 100, 1)
 					],
 					[
-						new THREE.Vector4( 0, - 200, 0, 1 ),
-						new THREE.Vector4( 0, - 100, - 100, 5 ),
-						new THREE.Vector4( 0, 100, 150, 5 ),
-						new THREE.Vector4( 0, 200, 0, 1 )
+						new THREE.Vector4(0, - 200, 0, 1),
+						new THREE.Vector4(0, - 100, - 100, 5),
+						new THREE.Vector4(0, 100, 150, 5),
+						new THREE.Vector4(0, 200, 0, 1)
 					],
 					[
-						new THREE.Vector4( 200, - 200, - 100, 1 ),
-						new THREE.Vector4( 200, - 100, 200, 1 ),
-						new THREE.Vector4( 200, 100, - 250, 1 ),
-						new THREE.Vector4( 200, 200, 100, 1 )
+						new THREE.Vector4(200, - 200, - 100, 1),
+						new THREE.Vector4(200, - 100, 200, 1),
+						new THREE.Vector4(200, 100, - 250, 1),
+						new THREE.Vector4(200, 200, 100, 1)
 					]
 				];
+
 				var degree1 = 2;
 				var degree2 = 3;
-				var knots1 = [ 0, 0, 0, 1, 1, 1 ];
-				var knots2 = [ 0, 0, 0, 0, 1, 1, 1, 1 ];
-				var nurbsSurface = new NURBSSurface( degree1, degree2, knots1, knots2, nsControlPoints );
+				var knots1 = [0, 0, 0, 1, 1, 1];
+				var knots2 = [0, 0, 0, 0, 1, 1, 1, 1];
+				var nurbsSurface = new NURBSSurface(degree1, degree2, knots1, knots2, nsControlPoints);
 
-				var map = new THREE.TextureLoader().load( 'textures/UV_Grid_Sm.jpg' );
+				var map = new THREE.TextureLoader().load('textures/UV_Grid_Sm.jpg');
 				map.wrapS = map.wrapT = THREE.RepeatWrapping;
 				map.anisotropy = 16;
 
-				function getSurfacePoint( u, v, target ) {
-
-					return nurbsSurface.getPoint( u, v, target );
-
+				function getSurfacePoint(u, v, target) {
+					return nurbsSurface.getPoint(u, v, target);
 				}
 
-				var geometry = new THREE.ParametricBufferGeometry( getSurfacePoint, 20, 20 );
-				var material = new THREE.MeshLambertMaterial( { map: map, side: THREE.DoubleSide } );
-				var object = new THREE.Mesh( geometry, material );
-				object.position.set( - 200, 100, 0 );
-				object.scale.multiplyScalar( 1 );
-				group.add( object );
+				var geometry = new THREE.ParametricBufferGeometry(getSurfacePoint, 20, 20);
+				var material = new THREE.MeshLambertMaterial({map: map, side: THREE.DoubleSide});
+				var object = new THREE.Mesh(geometry, material);
+				object.position.set(-200, 100, 0);
+				object.scale.multiplyScalar(1);
+				group.add( object);
 
 				//
 
